@@ -1,0 +1,16 @@
+# Chat en linea Anonimo
+
+Crear una pagina donde se manejen secciones y tokens por usuario
+Salas con codigos unicos donde las personas puedan conversar
+Tambien un apartado con agentes con personalidad y tambien personajes ya existentes (opcional ayuda de dibujos digitales)
+Y otro en donde la gente se pueda unir de manera aleatoria dependiendo del idioma a salas aleatorias
+
+Tecnologias:
+
+WebSockets
+LangGrap,LangChain
+OpenAi
+JWT
+FastApi
+Supabase
+Redis
