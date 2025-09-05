@@ -7,10 +7,15 @@ Y otro en donde la gente se pueda unir de manera aleatoria dependiendo del idiom
 
 Tecnologias:
 
-WebSockets
+FastApi
+WebSockets(Nativo)
 LangGrap,LangChain
 OpenAi
 JWT
 FastApi
 Supabase
 Redis
+Celery
+Pydantic
+SQLalchemy
+React(Fronted)
