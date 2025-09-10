@@ -1,6 +1,6 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-ws_chat = FastAPI()
+ws_chat = APIRouter()
 
 # Gestor simple de conexiones
 class ConnectionManager:
@@ -19,6 +19,10 @@ class ConnectionManager:
             await connection.send_text(message)
 
 manager = ConnectionManager()
+
+@ws_chat.get("/")
+async def get():
+    return {"message": "WebSocket Chat is running"}
 
 @ws_chat.websocket("/ws/chat")
 async def websocket_endpoint(websocket: WebSocket):
