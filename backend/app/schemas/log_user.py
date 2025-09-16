@@ -9,18 +9,19 @@ class UserBase(BaseModel):
     username: str
     email: str
     password: str
+    phone: str
 
 class UserCreate(UserBase):
     confirm_password: str
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: UUID
-    is_active: bool
-    token: str | None = None
+    username: str
+    email: str
+    phone: str
 
     class Config:
-        orm_mode = True
-
+        from_attributes = True
 #--------------------------------------------------------------
 #Login
 #No se pone LoginCreate ya que se hace el Oauth2 De fastApi
