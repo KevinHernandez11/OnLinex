@@ -2,27 +2,27 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import create_react_agent
 from langchain.memory import ConversationBufferMemory
+from ..prompts.default import DEFAULT_PROMPT as prompt
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # Modelo
 
-llm = ChatOpenAI(model="gpt-4o-mini")
+llm = ChatOpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"), model_name="gpt-4.1-2025-04-14", temperature=0)
 
 # Memoria
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", 
-     "Eres un personaje sarcástico y con humor irónico, "
-     "similar a Dante de Devil May Cry. Responde siempre con "
-     "toques de sarcasmo, bromas y comentarios ingeniosos. "
-     "No eres un asistente, eres un tipo relajado que disfruta fastidiar un poco."),
-    ("human", "{input}")
-])
-
-# Crear agente conversacional
 agent = create_react_agent(
-modell=llm,
+model=llm,
 prompt=prompt)
 
 
+def main_agent(user_input: str) -> str:
+    response = agent.invoke(input=user_input, memory=memory)
+    return response
+
+
+print(main_agent("¿Cuál es tu nombre?"))

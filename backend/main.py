@@ -13,6 +13,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(ws_chat, prefix="/ws", tags=["chat"])
+app.include_router(ws_chat, tags=["chat"])
 app.include_router(register, prefix="/api/v1", tags=["register"])
 app.include_router(login ,prefix="/api/v1", tags=["login"])

@@ -16,3 +16,5 @@ class User(base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
