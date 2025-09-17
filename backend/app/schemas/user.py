@@ -8,8 +8,8 @@ from uuid import UUID
 class UserBase(BaseModel):
     username: str
     email: str
-    password: str
     phone: str
+    password: str
 
 class UserCreate(UserBase):
     confirm_password: str

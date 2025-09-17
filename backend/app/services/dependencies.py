@@ -10,7 +10,6 @@ import datetime
 
 load_dotenv()
 
-# Configuración del contexto de hash
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class HashService():
@@ -21,6 +20,8 @@ class HashService():
     @staticmethod
     def get_password_hash(password: str) -> str:
         return pwd_context.hash(password)
+
+
 
 class JWTService():
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -38,16 +39,14 @@ class JWTService():
 
         return JWTService.create_access_token(data)
 
-
     @staticmethod
     def create_access_token(data: dict) -> str:
         to_encode = data.copy()
         expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=JWTService.EXPEDITION_TIME)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, JWTService.SECRET_KEY, algorithms=[JWTService.ALGORITHM])
+        encoded_jwt = jwt.encode(to_encode, JWTService.SECRET_KEY, algorithm=JWTService.ALGORITHM)
         return encoded_jwt
     
-
     @staticmethod
     def decode_token(token: str) -> dict:
         try:
