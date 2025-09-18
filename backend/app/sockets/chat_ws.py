@@ -1,4 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.agents.main_agent import main_agent
 
 ws_chat = APIRouter()
 
@@ -24,12 +25,14 @@ manager = ConnectionManager()
 async def get():
     return {"message": "WebSocket Chat is running"}
 
+
 @ws_chat.websocket("/ws/chat")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast(f"Mensaje: {data}")
+            response = main_agent(data)
+            await manager.broadcast(f"BOT: {response}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
