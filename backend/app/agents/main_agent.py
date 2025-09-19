@@ -4,28 +4,33 @@ from langgraph.prebuilt import create_react_agent
 from langchain.memory import ConversationBufferMemory
 from ..prompts.default import DEFAULT_PROMPT 
 from langchain_core.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langgraph import stateGraph
-# from  import MessageState
+from langgraph.graph import StateGraph , MessagesState
+from langchain_core.prompts import MessagesPlaceholder
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
+class ChatState(MessagesState):
+    pass
 
-# stateGraph(MessageState)
+llm = ChatOpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4.1-2025-04-14", temperature=0)
 
-#Modelo
-llm = ChatOpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"), model_name="gpt-4.1-2025-04-14", temperature=0)
-
-#Memoria
+#Memory precated 
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-#Prompt
-prompt = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template(DEFAULT_PROMPT),
-    HumanMessagePromptTemplate.from_template("{input}")
-])
+#Prompt Estatico (sin memoria)
+# prompt = ChatPromptTemplate.from_messages([
+#     SystemMessagePromptTemplate.from_template(DEFAULT_PROMPT),
+#     HumanMessagePromptTemplate.from_template("{input}")
+# ])
 
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", DEFAULT_PROMPT),
+    MessagesPlaceholder("messages"),
+    ("human", "{input}")
+])
 
 agent = create_react_agent(
 model=llm,

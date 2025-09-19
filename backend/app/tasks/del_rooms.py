@@ -1,0 +1,1 @@
+#With celery delete all rooms that are older than 1 day and clean up the database

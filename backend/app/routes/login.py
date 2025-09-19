@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.db.database import get_db
 from app.models.user import User
-from app.services.dependencies import JWTService, AuthService
+from app.services.jwt import JWTService
+from app.services.auth import AuthService
 from app.schemas.token import TokenResponse
 
 

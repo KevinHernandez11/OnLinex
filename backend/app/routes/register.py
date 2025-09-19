@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.schemas.user import UserCreate, UserResponse
 from app.db.database import get_db
 from app.models.user import User
-from app.services.dependencies import HashService
+from app.services.Hash import HashService
 from fastapi import HTTPException
 
 from fastapi import Depends
