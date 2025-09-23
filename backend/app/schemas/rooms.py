@@ -6,10 +6,17 @@ class RoomBase(BaseModel):
     capacity: int = 2
     is_public: bool = True
     language: str = "en"
+    is_active: bool = True
 
 
 class RoomCreate(RoomBase):
     pass
+
+class RoomResponse(BaseModel):
+    code: str
+
+    class Config:
+        orm_mode = True
 
 
 class RoomUpdate(BaseModel):
@@ -18,3 +25,12 @@ class RoomUpdate(BaseModel):
     is_public: Optional[bool] = None
     language: Optional[str] = None
 
+class RoomJoin(BaseModel):
+    code: str
+
+class RoomMemberResponse(BaseModel):
+    user_id: str
+    is_host: bool
+
+    class Config:
+        orm_mode = True
