@@ -19,6 +19,6 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     return TokenResponse(access_token=token, token_type="bearer")
 
 
-@login.post("/login/google/")
-async def login_google(token: str):
+@login.post("/login/temporal/")
+async def login_temporal():
     pass

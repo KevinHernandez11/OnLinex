@@ -41,11 +41,16 @@ async def create_rooms(form_data: RoomCreate, db = Depends(get_db)):
 
 
 
-
-@rooms.get("/rooms/{room_id}")
+@rooms.get("/room/search/{room_code}")
 async def get_room(room_code: str, db = Depends(get_db)):
     room = db.query(Room).filter(Room.code == room_code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     return room.code
+
+
+@rooms.get("/rooms/chat/{room_code}")
+async def get_room_chat(room_code: str, db = Depends(get_db)):
+     pass
+
     

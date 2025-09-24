@@ -26,11 +26,14 @@ class RoomMember(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id", ondelete="CASCADE"))
-    user_id = Column(UUID(as_uuid=True), nullable=False) #Anon user id or registered user id
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True) #Registered user id
+    temp_user = Column(UUID(as_uuid=True), ForeignKey("temp_users.id"), nullable=True)
     is_host = Column(Boolean, default=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
     room = relationship("Room", back_populates="members")
+    user = relationship("User", back_populates="room_members")
+    temp_user = relationship("TempUser", back_populates="user_rooms")
 
 
 class RoomMessage(Base):

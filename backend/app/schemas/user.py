@@ -7,8 +7,6 @@ from uuid import UUID
 #Register
 class UserBase(BaseModel):
     username: str
-    email: str
-    phone: str
     password: str
 
 class UserCreate(UserBase):
@@ -17,8 +15,6 @@ class UserCreate(UserBase):
 class UserResponse(BaseModel):
     id: UUID
     username: str
-    email: str
-    phone: str
 
     class Config:
         from_attributes = True
@@ -34,6 +30,4 @@ class UserLoginResponse(BaseModel):
 #Update
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
     password: Optional[str] = None
