@@ -19,6 +19,7 @@ class JWTService():
         data = {
             "id":str(user.id),
             "username": str(user.username),
+            "type": str(user.type_user)
         }
 
         return JWTService.create_access_token(data)

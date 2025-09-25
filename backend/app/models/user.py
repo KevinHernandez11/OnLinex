@@ -24,7 +24,7 @@ class TempUser(Base):
     __tablename__ = "temp_users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    temp_username = Column(String, unique=True, index=True, nullable=False)
+    temp_username = Column(String,index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
 

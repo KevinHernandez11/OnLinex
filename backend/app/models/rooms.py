@@ -33,7 +33,7 @@ class RoomMember(Base):
 
     room = relationship("Room", back_populates="members")
     user = relationship("User", back_populates="room_members")
-    temp_user = relationship("TempUser", back_populates="user_rooms")
+    temp_users = relationship("TempUser", back_populates="user_rooms")
 
 
 class RoomMessage(Base):

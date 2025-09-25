@@ -5,6 +5,10 @@ from app.models.user import User
 from app.services.jwt import JWTService
 from app.services.auth import AuthService
 from app.schemas.token import TokenResponse
+from app.schemas.user import TempUserCreate, TempUserResponse
+from app.models.user import TempUser
+from datetime import datetime, timezone, timedelta
+
 
 
 login = APIRouter() 
@@ -19,6 +23,37 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     return TokenResponse(access_token=token, token_type="bearer")
 
 
-@login.post("/login/temporal/")
-async def login_temporal():
-    pass
+@login.post("/login/temporal/", response_model=TempUserResponse, status_code=201)
+async def login_temporal(temp_user: TempUserCreate, db=Depends(get_db)):
+
+    if not temp_user.temp_username:
+        raise HTTPException(status_code=400, detail="Username is required")
+
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=6)
+
+    temp_user = TempUser(
+        temp_username=temp_user.temp_username,
+        created_at=now,
+        expires_at=expires_at,
+    )
+
+    db.add(temp_user)
+    db.commit()
+    db.refresh(temp_user)
+
+    user_temp = {
+        "id": str(temp_user.id),
+        "temp_username": str(temp_user.temp_username),
+        "type_user": str("Temporary")
+    }
+
+    token = JWTService.create_access_token(user_temp)
+
+    return TempUserResponse(
+        id=temp_user.id,
+        temp_username=temp_user.temp_username,
+        expires_at=expires_at.isoformat(),
+        token=token
+    )
+

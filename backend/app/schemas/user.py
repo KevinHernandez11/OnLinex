@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 
 
 #------------------------------------------------------------
@@ -31,3 +32,29 @@ class UserLoginResponse(BaseModel):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
+
+
+#--------------------------------------------------------------
+#Temporal User
+class TempUserBase(BaseModel):
+    temp_username: str
+
+class TempUserCreate(TempUserBase):
+    pass
+
+
+class TempUserResponse(BaseModel):
+    id: UUID  
+    temp_username: str
+    expires_at: datetime
+    token: str
+
+
+    class Config:
+        from_attributes = True
+
+
+class CurrentUser(BaseModel):
+    id: UUID
+    username: str
+    type: str

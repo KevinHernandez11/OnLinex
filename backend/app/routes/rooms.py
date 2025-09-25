@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.db.database import get_db
 from app.schemas.rooms import RoomCreate, RoomResponse
 from app.services.rooms import RoomService
+from app.services.auth import AuthService
 from app.models.rooms import Room
 
 rooms = APIRouter()
@@ -38,6 +39,11 @@ async def create_rooms(form_data: RoomCreate, db = Depends(get_db)):
         code=new_room.code,
         name=form_data.name,
     )
+
+
+@rooms.get("/rooms/join")
+async def join_room(user = Depends(AuthService.get_current_user), db = Depends(get_db)):  
+    print(user)
 
 
 
