@@ -22,7 +22,7 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db= Depen
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    user_data = {"id": str(user.id) , "username": str(user.username), "type_user": "Register"}
+    user_data = {"id": str(user.id) , "username": str(user.username), "type_user": "register"}
     token = JWTService.create_access_token(user_data)
     
     return TokenResponse(access_token=token, token_type="bearer")
@@ -50,7 +50,7 @@ async def login_temporal(temp_user: TempUserCreate, db=Depends(get_db)):
     user_temp = {
         "id": str(temp_user.id),
         "temp_username": str(temp_user.temp_username),
-        "type_user": str("Temporary")
+        "type_user": str("temporary")
     }
 
     token = JWTService.create_access_token(user_temp, expires_in = os.getenv("TEMP_USER_EXPIRATION_HOURS", 6))

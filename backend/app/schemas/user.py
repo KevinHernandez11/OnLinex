@@ -55,6 +55,7 @@ class TempUserResponse(BaseModel):
         from_attributes = True
 
 
+#--------------
 class CurrentUser(BaseModel):
     id: UUID
     username: str
