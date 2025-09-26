@@ -8,17 +8,22 @@ from app.schemas.token import TokenResponse
 from app.schemas.user import TempUserCreate, TempUserResponse
 from app.models.user import TempUser
 from datetime import datetime, timezone, timedelta
+from dotenv import load_dotenv
+import os
 
-
+load_dotenv()
 
 login = APIRouter() 
 
 @login.post("/login")
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = AuthService.auth_user(form_data.username, form_data.password)
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db= Depends(get_db)):
+    user = AuthService.auth_user(form_data.username, form_data.password, db)
+
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = JWTService.create_token(user)
+    
+    user_data = {"id": str(user.id) , "username": str(user.username), "type_user": "Register"}
+    token = JWTService.create_access_token(user_data)
     
     return TokenResponse(access_token=token, token_type="bearer")
 
@@ -48,12 +53,13 @@ async def login_temporal(temp_user: TempUserCreate, db=Depends(get_db)):
         "type_user": str("Temporary")
     }
 
-    token = JWTService.create_access_token(user_temp)
+    token = JWTService.create_access_token(user_temp, expires_in = os.getenv("TEMP_USER_EXPIRATION_HOURS", 6))
 
     return TempUserResponse(
         id=temp_user.id,
         temp_username=temp_user.temp_username,
         expires_at=expires_at.isoformat(),
-        token=token
+        token=token,
+        token_type="bearer"
     )
 

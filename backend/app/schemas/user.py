@@ -48,6 +48,7 @@ class TempUserResponse(BaseModel):
     temp_username: str
     expires_at: datetime
     token: str
+    token_type: str
 
 
     class Config:

@@ -12,27 +12,18 @@ class JWTService():
     ALGORITHM = os.getenv("ALGHORITHM")
     EXPEDITION_TIME = int(os.getenv("EXPEDTION_TIME", 24))
 
-    @staticmethod
-    def create_token(user: User):
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        data = {
-            "id":str(user.id),
-            "username": str(user.username),
-            "type": str(user.type_user)
-        }
-
-        return JWTService.create_access_token(data)
-
 
     @staticmethod
-    def create_access_token(data: dict) -> str:
+    def create_access_token(data: dict, expires_in: int = None) -> str:
         to_encode = data.copy()
-        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=JWTService.EXPEDITION_TIME)
+
+        hours = expires_in if expires_in is not None else JWTService.EXPEDITION_TIME
+        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=hours)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, JWTService.SECRET_KEY, algorithm=JWTService.ALGORITHM)
         return encoded_jwt
     
+
     @staticmethod
     def decode_token(token: str) -> dict:
         try:

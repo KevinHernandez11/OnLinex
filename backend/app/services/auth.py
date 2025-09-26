@@ -16,10 +16,10 @@ security = HTTPBearer()
 
 class AuthService():
     @staticmethod
-    def auth_user(username: str, password: str, db = Depends(get_db)) -> User:
+    def auth_user(username: str, password: str, db:Session) -> User:
             user = db.query(User).filter(User.username == username).first()
             if not user or not HashService.verify_password(password, user.hashed_password):
-                raise HTTPException(status_code=401, detail="Invalid email or password")
+                raise HTTPException(status_code=401, detail="Invalid username or password")
             return user
     
 
