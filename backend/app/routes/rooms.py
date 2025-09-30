@@ -71,10 +71,31 @@ async def join_room(room_code: str, user = Depends(AuthService.get_current_user)
 
     return {"message": f"User {user.username} joined room {room.code}"}
 
+#Ruta para buscar una sala por idioma, capacidad y si está activa para unirse a ella si es pública.
+@rooms.get("/room/search/")
+async def get_room(language: str, db = Depends(get_db)):
+    room = db.query(Room).filter(
+        Room.language == language,
+        Room.is_public == True,
+        Room.is_active == True,
+        Room.expires_at > datetime.now(timezone.utc)
+    ).first()
 
-@rooms.get("/room/search/{room_code}")
-async def get_room(room_code: str, db = Depends(get_db)):
-    room = db.query(Room).filter(Room.code == room_code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-    return room.code
+
+    if room.max_users <= db.query(RoomMember).filter(RoomMember.room_id == room.id).count():
+        raise HTTPException(status_code=403, detail="Room is full")
+    
+    if (room.expires_at - datetime.now(timezone.utc)).total_seconds() < 60:
+        raise HTTPException(status_code=410, detail="Room about to expire")
+    
+    
+
+    
+
+    
+
+    
+
+

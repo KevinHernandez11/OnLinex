@@ -1,5 +1,4 @@
-﻿import { useState } from "react"
-import { z } from "zod"
+﻿import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
@@ -7,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,9 +15,7 @@ import { Input } from "@/components/ui/input"
 
 const registerSchema = z
   .object({
-    name: z
-      .string()
-      .min(2, "El nombre debe tener al menos 2 caracteres"),
+    username: z.string().min(2, "El nombre de usuario debe tener al menos 2 caracteres"),
     password: z
       .string()
       .min(8, "La contrasena debe tener al menos 8 caracteres"),
@@ -34,40 +30,75 @@ const registerSchema = z
 
 type RegisterFormValues = z.infer<typeof registerSchema>
 
-export function RegisterForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? ""
 
+export function RegisterForm() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
+      username: "",
       password: "",
       confirmPassword: "",
     },
   })
 
-  function onSubmit(values: RegisterFormValues) {
-    setIsSubmitting(true)
+  async function onSubmit(values: RegisterFormValues) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: values.username,
+          password: values.password,
+          confirm_password: values.confirmPassword,
+        }),
+      })
 
-    setTimeout(() => {
-      console.log("Datos de registro", values)
-      setIsSubmitting(false)
-    }, 1000)
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { detail?: string; message?: string }
+          | null
+        const message =
+          data?.detail ??
+          data?.message ??
+          "No pudimos crear tu cuenta. Intenta nuevamente."
+        form.setError("root", { message })
+        return
+      }
+
+      form.reset()
+    } catch (error) {
+      form.setError("root", {
+        message: "Ocurrio un error inesperado. Intenta mas tarde.",
+      })
+      console.error("Register error", error)
+    }
   }
+
+  const {
+    handleSubmit,
+    control,
+    formState: { isSubmitting, errors },
+  } = form
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {errors.root?.message ? (
+          <p className="text-sm text-destructive">{errors.root.message}</p>
+        ) : null}
         <FormField
-          control={form.control}
-          name="name"
+          control={control}
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full name</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Your name"
-                  autoComplete="name"
+                  placeholder="Tu nombre de usuario"
+                  autoComplete="username"
                   {...field}
                 />
               </FormControl>
@@ -76,7 +107,7 @@ export function RegisterForm() {
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="password"
           render={({ field }) => (
             <FormItem>
@@ -89,19 +120,16 @@ export function RegisterForm() {
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                Use 8 or more characters with a mix of letters, numbers & symbols
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel>Confirmar contrasena</FormLabel>
               <FormControl>
                 <Input
                   type="password"

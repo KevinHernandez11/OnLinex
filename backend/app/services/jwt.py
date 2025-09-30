@@ -37,3 +37,18 @@ class JWTService():
             raise HTTPException(status_code=401, detail="Token expired")
         except JWTError:
             raise HTTPException(status_code=401, detail="Could not validate credentials")
+        
+
+    @staticmethod
+    def decode_token_ws(token: str) -> dict:
+        try:
+            return jwt.decode(
+                token,
+                JWTService.SECRET_KEY,
+                algorithms=[JWTService.ALGORITHM],
+            )
+        except ExpiredSignatureError:
+            raise JWTError("Token expired")
+        except JWTError:
+            raise JWTError("Could not validate credentials")
+

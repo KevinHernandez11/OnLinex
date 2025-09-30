@@ -2,12 +2,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.agents.main_agent import main_agent
 from app.db.database import get_db
 from app.models.rooms import Room
-from fastapi import Depends
+from fastapi import Depends, status
 from app.services.auth import AuthService
 from app.models.rooms import RoomMessage
-from datetime import datetime, timezone
 from app.models.user import User
-
+from sqlalchemy.orm import Session
 
 
 ws_chat = APIRouter()
@@ -42,47 +41,30 @@ async def get():
     return {"message": "WebSocket Chat is running"}
 
 
+
 @ws_chat.websocket("/ws/chat/{room_code}")
 async def websocket_endpoint(
     websocket: WebSocket,
     room_code: str,
-    db=Depends(get_db),
-    user=Depends(AuthService.get_current_user)
+    user: User = Depends(AuthService.get_ws_current_user),
+    db: Session = Depends(get_db),
 ):
-
-    user = db.query(User).filter(User.id == user.id).first()
-    if not user:
-        await websocket.close(code=1008)
-        return "Unauthorized"
-
     room = db.query(Room).filter(Room.code == room_code).first()
     if not room:
-        await websocket.close(code=1008)
-        return "Room not found"
-    
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await manager.connect(websocket, room_code)
 
     try:
         while True:
-            data = await websocket.receive_text()
+            text = await websocket.receive_text()
 
-            # 1. Guardar el mensaje en DB
-            new_message = RoomMessage(
-                room_id=room.id,
-                user_id=user.id,
-                content=data,
-            )
-            db.add(new_message)
+            message = RoomMessage(room_id=room.id, sender_name=user.id, content=text)
+            db.add(message)
             db.commit()
-            db.refresh(new_message)
+            db.refresh(message)
 
-            # 2. Enviar el mensaje a los demás
-            await manager.broadcast(
-                f"{user.username}: {data}", 
-                room_code
-            )
+            await manager.broadcast(f"{user.username}: {text}", room_code)
     except WebSocketDisconnect:
         manager.disconnect(websocket, room_code)
-
-
-
