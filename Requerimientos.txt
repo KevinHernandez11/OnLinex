@@ -1,0 +1,42 @@
+# Chat en linea Anonimo
+
+Crear una pagina donde se manejen secciones y tokens por usuario
+Salas con codigos unicos donde las personas puedan conversar
+Tambien un apartado con agentes con personalidad y tambien personajes ya existentes (opcional ayuda de dibujos digitales)
+Y otro en donde la gente se pueda unir de manera aleatoria dependiendo del idioma a salas aleatorias
+
+Tecnologias:
+
+FastApi
+WebSockets(Nativo)
+LangGrap,LangChain
+OpenAi
+JWT
+FastApi
+Supabase
+Redis
+Celery
+Pydantic
+SQLalchemy
+React(Fronted)
+
+Rate limiting (ej: slowapi) → evitar spam en el chat.
+
+
+⚡ ¿Qué aportaría Celery realmente en Onlinex?
+
+En este caso, muy poco extra, salvo que quieras:
+Moderación automática de mensajes (ejemplo: filtrar insultos, bloquear contenido).
+Estadísticas pesadas (ejemplo: análisis de uso, gráficos de interacciones).
+Procesar multimedia (si más adelante permites imágenes o audios).
+Tareas programadas (ejemplo: autodestruir chats cada 24h).
+
+Celery se encarga en segundo plano de:
+Actualizar estadísticas.
+Procesar multimedia.
+Ejecutar tareas programadas (limpieza).
+
+---------------
+
+
+-Guardar 
