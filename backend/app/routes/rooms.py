@@ -59,22 +59,30 @@ async def join_room(room_code: str, user = Depends(AuthService.get_current_user)
     if not room.is_active or room.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=403, detail="Room is inactive or expired")
     
-    current_members_count = db.query(RoomMember).filter(RoomMember.room_id == room.id).count()
-    if current_members_count >= room.max_users:
+    current_users = db.query(RoomMember).filter(RoomMember.room_id == room.id, RoomMember.is_active == True).count()
+    if current_users >= room.max_users:
         raise HTTPException(status_code=403, detail="Room is full")
-    
-    existing_member = db.query(RoomMember).filter_by(room_id=room.id, user_id=user.id).first()
+
+    existing_member = db.query(RoomMember).filter_by(room_id=room.id, user_id=user.id, is_active=True).first()
     if existing_member:
         raise HTTPException(status_code=400, detail="User already in the room")
     
+    active_membership = db.query(RoomMember).filter_by(user_id=user.id, is_active=True).first()
+    if active_membership:
+        raise HTTPException(status_code=400, detail="User already in another room")
+
     RoomService.add_member_to_room(db, room.id, user.id)
 
     return {"message": f"User {user.username} joined room {room.code}"}
 
-
 #Ruta para buscar una sala por idioma, capacidad y si está activa para unirse a ella si es pública.
 @rooms.get("/room/search/")
-async def get_room(language: str, db = Depends(get_db)):
+async def get_room(language: str, db = Depends(get_db), user = Depends(AuthService.get_current_user)):
+
+    user_active_membership = db.query(RoomMember).filter_by(user_id=user.id, is_active=True).first()
+    if user_active_membership:
+        raise HTTPException(status_code=400, detail="User already in another room")
+
     room = db.query(Room).filter(
         Room.language == language,
         Room.is_public == True,
@@ -82,14 +90,20 @@ async def get_room(language: str, db = Depends(get_db)):
         Room.expires_at > datetime.now(timezone.utc)
     ).first()
 
+    current_members = db.query(RoomMember).filter(RoomMember.room_id == room.id, RoomMember.is_active == True).count()
+    if current_members >= room.max_users:
+        raise HTTPException(status_code=403, detail="Room is full")
+
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-
-    if room.max_users <= db.query(RoomMember).filter(RoomMember.room_id == room.id).count():
-        raise HTTPException(status_code=403, detail="Room is full")
     
     if (room.expires_at - datetime.now(timezone.utc)).total_seconds() < 60:
         raise HTTPException(status_code=410, detail="Room about to expire")
+    
+    return RoomResponse(
+        code=room.code,
+        name=room.name
+    )
     
 
 @rooms.post("/rooms/{room_code}/leave")
