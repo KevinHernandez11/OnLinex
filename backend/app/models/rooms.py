@@ -28,6 +28,7 @@ class RoomMember(Base):
     room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id", ondelete="CASCADE"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True) #Registered user id
     is_host = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
 
     room = relationship("Room", back_populates="members")
     user = relationship("User", back_populates="room_members")

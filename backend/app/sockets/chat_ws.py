@@ -7,6 +7,7 @@ from app.services.auth import AuthService
 from app.models.rooms import RoomMessage
 from app.models.user import User
 from sqlalchemy.orm import Session
+from app.services.rooms import RoomService
 
 
 ws_chat = APIRouter()
@@ -67,4 +68,6 @@ async def websocket_endpoint(
 
             await manager.broadcast(f"{user.username}: {text}", room_code)
     except WebSocketDisconnect:
+        
+        RoomService.remove_member_from_room(db, room.id, user.id)
         manager.disconnect(websocket, room_code)

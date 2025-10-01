@@ -22,9 +22,18 @@ class RoomService():
         new_member = RoomMember(
             room_id=room_id,
             user_id=user_id,
-            is_host=is_host
+            is_host=is_host,
+            is_active=True
         )
         db.add(new_member)
         db.commit()
         db.refresh(new_member)
+
+
+    @staticmethod
+    def remove_member_from_room(db, room_id: int, user_id: str):
+        member = db.query(RoomMember).filter_by(room_id=room_id, user_id=user_id).first()
+        if member:
+            member.is_active = False
+            db.commit()
 
