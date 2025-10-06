@@ -37,6 +37,17 @@ def summarize_history(messages):
     summary_prompt = f"""
     Resume de forma breve y clara la siguiente conversación.
     Enfócate en los temas tratados y las intenciones del usuario.
+    Y porfa no te extiendas en el resumen simplemente los puntos más importantes.
+    Y la idea central de todos los mensajes y si son variados temas trata de resumirlos todos de manera corta y clara.
+
+    Por ejemplo
+    # El usuario quiere aprender sobre inteligencia artificial y pide recomendaciones de libros y cursos.
+        O
+    # El usuario está interesado en viajar a Japón y busca consejos sobre lugares para visitar y alojamientos.
+        O
+    # El usuario está planeando una fiesta de cumpleaños y necesita ideas para la decoración, comida y actividades.
+
+    
 
     Conversación:
     {text}
