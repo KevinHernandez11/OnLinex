@@ -15,6 +15,7 @@ class Conversation(Base):
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
     user = relationship("User", back_populates="conversations")
+    summaries = relationship("AgentMemorySummary", back_populates="conversation", cascade="all, delete-orphan")
 
 
 class Message(Base):
@@ -24,7 +25,20 @@ class Message(Base):
     conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"))
     sender = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    is_error = Column(Boolean, default=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     conversation = relationship("Conversation", back_populates="messages")
+
+
+
+class AgentMemorySummary(Base):
+    __tablename__ = "agent_memory_summaries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"))
+    summary = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    conversation = relationship("Conversation", back_populates="summaries")
+

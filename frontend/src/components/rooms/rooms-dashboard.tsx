@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { RoomChat } from "@/components/rooms/room-chat"
+import { AiChat } from "@/components/rooms/ai-chat"
 
 const createRoomSchema = z.object({
   name: z.string().min(1, "El nombre de la sala es obligatorio"),
@@ -311,14 +312,18 @@ export function RoomsDashboard({ accessToken, tokenType, onLogout }: RoomsDashbo
             </CardContent>
           </Card>
         </div>
-        {activeRoomCode ? (
-          <RoomChat roomCode={activeRoomCode} accessToken={accessToken} tokenType={tokenType} />
-        ) : null}
+        <div className="space-y-6">
+          {activeRoomCode ? (
+            <RoomChat roomCode={activeRoomCode} accessToken={accessToken} tokenType={tokenType} />
+          ) : null}
+          <AiChat
+            accessToken={accessToken}
+            tokenType={tokenType}
+            onUnauthorized={onLogout}
+          />
+        </div>
       </div>
     </div>
   )
 }
-
-
-
 
