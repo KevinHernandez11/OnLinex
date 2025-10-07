@@ -47,7 +47,7 @@ def summarize_history(messages):
         O
     # El usuario está planeando una fiesta de cumpleaños y necesita ideas para la decoración, comida y actividades.
 
-    
+
 
     Conversación:
     {text}
@@ -69,7 +69,6 @@ def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> s
         agent,
         lambda _: redis_history,
         input_messages_key="input",
-        history_messages_key="messages"
     )
 
     response = agent_with_history.invoke(
@@ -77,9 +76,11 @@ def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> s
         config={"configurable": {"session_id": session_id}},
     )
 
-
     if len(redis_history.messages) >= 10: #
-        summary = summarize_history(redis_history.messages[:-5]) 
+        summary = summarize_history(redis_history.messages[:10]) 
+
+        for _ in range(10):
+            redis_history.messages.pop(0)
 
         conversation = AgentMemorySummary(
             conversation_id=session_id,
@@ -90,8 +91,7 @@ def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> s
         db.commit()
         db.refresh(conversation)
 
-
-        redis_history.add_ai_message(f"Resumen guardado: {summary[:100]}...")
         redis_history.clear()
+        redis_history.add_ai_message(f"Resumen guardado: {summary[:100]}...")
 
     return response
