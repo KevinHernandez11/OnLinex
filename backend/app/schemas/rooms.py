@@ -13,6 +13,7 @@ class RoomCreate(RoomBase):
 
 class RoomResponse(BaseModel):
     code: str
+    name: str
 
     class Config:
         orm_mode = True

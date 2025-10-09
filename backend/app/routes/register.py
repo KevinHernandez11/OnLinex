@@ -1,15 +1,17 @@
 from fastapi import APIRouter
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate
 from app.db.database import get_db
 from app.models.user import User
 from app.services.Hash import HashService
 from fastapi import HTTPException
+from app.services.jwt import JWTService
+from app.schemas.token import TokenResponse
 
 from fastapi import Depends
 
 register = APIRouter()
 
-@register.post("/register", response_model=UserResponse, status_code=201)
+@register.post("/register", response_model=TokenResponse, status_code=201)
 async def create_user(form_data: UserCreate, db = Depends(get_db)):
 
     if not all([form_data.username, form_data.confirm_password]):
@@ -17,11 +19,6 @@ async def create_user(form_data: UserCreate, db = Depends(get_db)):
     
     if form_data.password != form_data.confirm_password:
         raise HTTPException(status_code=400, detail="passwords do not match")
-    
-    get_user = db.query(User).filter(User.username == form_data.username).first()
-    if get_user:
-        raise HTTPException(status_code=400, detail="the username already exists")
-    
     
     hashed_password = HashService.get_password_hash(form_data.password)
 
@@ -35,8 +32,13 @@ async def create_user(form_data: UserCreate, db = Depends(get_db)):
     db.commit()
     db.refresh(data_user)
 
-    return UserResponse(
-        id=data_user.id,
-        username=data_user.username,
-    )
-    
+    user_data = {
+        "id": str(data_user.id),
+        "username": str(data_user.username),
+        "type_user": str(data_user.type_user),
+    }
+    token = JWTService.create_access_token(user_data)
+
+    return TokenResponse(access_token=token, token_type="bearer")
+
+
