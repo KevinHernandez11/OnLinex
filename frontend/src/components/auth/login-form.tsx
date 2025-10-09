@@ -67,8 +67,6 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       }
 
       const tokenType = data.token_type ?? "bearer"
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("token_type", tokenType)
       form.reset()
       onLoginSuccess?.(data.access_token, tokenType)
     } catch (error) {

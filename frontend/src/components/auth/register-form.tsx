@@ -32,7 +32,11 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? ""
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  onRegisterSuccess?: (token: string, tokenType: string) => void
+}
+
+export function RegisterForm({ onRegisterSuccess }: RegisterFormProps = {}) {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -56,10 +60,11 @@ export function RegisterForm() {
         }),
       })
 
+      const data = (await response.json().catch(() => null)) as
+        | { access_token?: string; token_type?: string; detail?: string; message?: string }
+        | null
+
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as
-          | { detail?: string; message?: string }
-          | null
         const message =
           data?.detail ??
           data?.message ??
@@ -68,7 +73,16 @@ export function RegisterForm() {
         return
       }
 
+      if (!data?.access_token) {
+        form.setError("root", {
+          message: data?.detail ?? "No se recibio el token de acceso.",
+        })
+        return
+      }
+
+      const tokenType = data.token_type ?? "bearer"
       form.reset()
+      onRegisterSuccess?.(data.access_token, tokenType)
     } catch (error) {
       form.setError("root", {
         message: "Ocurrio un error inesperado. Intenta mas tarde.",
