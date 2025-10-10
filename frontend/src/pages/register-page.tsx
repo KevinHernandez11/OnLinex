@@ -29,9 +29,6 @@ export function RegisterPage() {
       <div className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" />
       <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="flex flex-col justify-center gap-6 text-left">
-          <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-            Empieza gratis hoy
-          </span>
           <div className="space-y-4">
             <h2 className="text-3xl font-semibold sm:text-4xl">Construye tu espacio en OnLinex</h2>
             <p className="max-w-lg text-base text-muted-foreground sm:text-lg">
