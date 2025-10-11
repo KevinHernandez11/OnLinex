@@ -1,8 +1,10 @@
-import { useState } from "react"
-import { Bot, Info, Sparkles, Users, X } from "lucide-react"
+import { Bot, Sparkles, Users, ArrowRight, Zap, Shield, Clock } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { AmbientBouncer } from "@/components/visuals/ambient-bouncer"
 
 export function LandingPage() {
@@ -11,121 +13,154 @@ export function LandingPage() {
       Icon: Sparkles,
       title: "Listo en minutos",
       description: "Configura tu sala, invita participantes y colabora sin friccion.",
+      color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-950/20",
     },
     {
       Icon: Users,
       title: "Experiencia compartida",
       description: "Gestiona miembros, conversaciones y espacios en tiempo real.",
+      color: "text-green-500",
+      bgColor: "bg-green-50 dark:bg-green-950/20",
     },
     {
       Icon: Bot,
       title: "IA integrada",
       description: "Resuelve dudas y automatiza tareas con nuestro agente inteligente.",
+      color: "text-purple-500",
+      bgColor: "bg-purple-50 dark:bg-purple-950/20",
     },
   ]
 
-  const [showInfo, setShowInfo] = useState(false)
+  const benefits = [
+    {
+      Icon: Zap,
+      title: "Configuración instantánea",
+      description: "Crea salas en segundos, sin configuraciones complejas",
+    },
+    {
+      Icon: Shield,
+      title: "Seguro y privado",
+      description: "Tus conversaciones están protegidas con encriptación de extremo a extremo",
+    },
+    {
+      Icon: Clock,
+      title: "Tiempo real",
+      description: "Comunicación instantánea mientras estés conectado a la sala",
+    },
+  ]
 
   return (
     <div className="relative isolate h-full overflow-hidden">
       <AmbientBouncer count={14} />
-      <section className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-12 overflow-hidden rounded-3xl border bg-background px-6 py-16 text-center shadow-lg shadow-border/20 sm:px-10">
-        <div className="relative flex flex-col items-center gap-10">
-          <div className="space-y-6">
-            <h1 className="text-5xl font-black tracking-tight text-foreground sm:text-6xl">
+      
+      {/* Hero Section */}
+      <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-16 overflow-hidden rounded-3xl border bg-background/80 backdrop-blur-sm px-6 py-20 text-center shadow-2xl shadow-border/20 sm:px-10">
+        <div className="relative flex flex-col items-center gap-12">
+          {/* Hero Header */}
+          <div className="space-y-8">
+            <div className="flex justify-center">
+              <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Plataforma colaborativa de nueva generación
+              </Badge>
+            </div>
+            <h1 className="text-6xl font-black tracking-tight text-foreground sm:text-7xl lg:text-8xl">
               <span className="bg-gradient-to-r from-primary via-sky-500 to-primary bg-clip-text text-transparent">
                 OnLinex
               </span>
             </h1>
-            <p className="mx-auto max-w-3xl text-lg text-muted-foreground sm:text-xl">
+            <p className="mx-auto max-w-4xl text-xl text-muted-foreground sm:text-2xl lg:text-xl leading-relaxed">
               Lanza salas colaborativas, invita a tu equipo en segundos o conversa con nuestra IA
-              integrada. Todo desde una unica plataforma disenada para flujos en tiempo real.
+              integrada. Todo desde una única plataforma diseñada para flujos en tiempo real.
             </p>
           </div>
-          <div className="flex w-full max-w-4xl flex-col gap-10 sm:flex-row sm:items-start sm:justify-center sm:gap-20">
-            <div className="flex w-full max-w-sm flex-col items-start gap-4 text-left">
-              <div className="space-y-1">
-                <h3 className="text-xl font-semibold text-foreground">Gestiona tu equipo</h3>
-                <p className="text-sm text-muted-foreground">
-                  Crea o unete a una sala en segundos y coordina cada paso con tu equipo.
-                </p>
-              </div>
-              <Button asChild className="h-11 w-full">
-                <Link to="/rooms/create">Crear una sala</Link>
-              </Button>
-              <Button asChild variant="secondary" className="h-11 w-full">
-                <Link to="/rooms/join">Unirme a una sala</Link>
-              </Button>
-            </div>
-            <div className="flex w-full max-w-sm flex-col items-start gap-3 text-left">
-              <div className="space-y-1">
-                <h3 className="text-xl font-semibold text-foreground">Habla con la IA</h3>
-                <p className="text-sm text-muted-foreground">
-                  Consulta ideas, refina mensajes o automatiza tareas con nuestro agente listo 24/7.
-                </p>
-              </div>
-              <Button asChild variant="outline" className="h-11 w-full">
-                <Link to="/ai">Hablar con la IA</Link>
-              </Button>
-            </div>
+
+          {/* Action Cards */}
+          <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-2">
+            <Card className="group relative overflow-hidden border-2 transition-all hover:border-primary/50 hover:shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-xl">Gestiona tu equipo</CardTitle>
+                    <CardDescription>
+                      Crea o únete a una sala en segundos y coordina cada paso con tu equipo.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button asChild className="w-full h-11 group-hover:bg-primary/90 transition-colors">
+                  <Link to="/rooms/create">
+                    Crear una sala
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full h-11">
+                  <Link to="/rooms/join">Unirme a una sala</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 transition-all hover:border-primary/50 hover:shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400">
+                    <Bot className="h-6 w-6" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-xl">Habla con la IA</CardTitle>
+                    <CardDescription>
+                      Consulta ideas, refina mensajes o automatiza tareas con nuestro agente listo 24/7.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full h-11 group-hover:bg-accent transition-colors">
+                  <Link to="/ai">
+                    Hablar con la IA
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-        <div className="fixed bottom-6 right-6 z-20 sm:bottom-8 sm:right-8">
-          <div className="pointer-events-none absolute inset-0 -z-10 animate-pulse rounded-full bg-primary/20 blur-2xl" />
-          <button
-            type="button"
-            onClick={() => setShowInfo(true)}
-            className="group relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary via-sky-500 to-primary text-white shadow-xl shadow-primary/30 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
-          >
-            <span className="absolute inset-[1px] rounded-full bg-background/30 backdrop-blur-sm transition group-hover:bg-background/20" />
-            <Info className="relative h-5 w-5 transition group-hover:rotate-6" aria-hidden="true" />
-            <span className="sr-only">Abrir informacion de la pagina</span>
-          </button>
+
+        <Separator className="my-8" />
+
+        {/* Benefits Section */}
+        <div className="space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold text-foreground">¿Por qué elegir OnLinex?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Descubre las ventajas que hacen de OnLinex la mejor opción para tu equipo
+            </p>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-3">
+            {benefits.map(({ Icon, title, description }) => (
+              <Card key={title} className="text-center border-0 bg-muted/30 backdrop-blur-sm">
+                <CardContent className="pt-6">
+                  <div className="flex justify-center mb-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <Icon className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      {showInfo ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 px-4 py-10 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl rounded-3xl border border-border/70 bg-background/95 p-8 shadow-2xl shadow-primary/10 sm:p-10">
-            <button
-              type="button"
-              onClick={() => setShowInfo(false)}
-              className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only">Cerrar informacion</span>
-            </button>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold text-foreground">Informacion de la pagina</h2>
-                <p className="text-sm text-muted-foreground sm:text-base">
-                  Descubre como OnLinex acelera tu colaboracion con espacios inteligentes y herramientas
-                  disenadas para equipos agiles.
-                </p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                {featureHighlights.map(({ Icon, title, description }) => (
-                  <div
-                    key={title}
-                    className="group rounded-2xl border border-border/70 bg-background/80 p-6 text-start shadow-sm transition hover:border-primary/40 hover:shadow-lg"
-                  >
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end">
-                <Button variant="secondary" onClick={() => setShowInfo(false)}>
-                  Cerrar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+
     </div>
   )
 }

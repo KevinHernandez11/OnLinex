@@ -91,16 +91,15 @@
     @apply border-border;
   }
 
-  html,
-  body {
-    @apply h-full overflow-hidden;
+  html {
+    @apply h-full;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-full bg-background text-foreground;
   }
 
   #root {
-    @apply h-full;
+    @apply min-h-full;
   }
 }
