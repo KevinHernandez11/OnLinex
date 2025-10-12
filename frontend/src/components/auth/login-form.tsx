@@ -1,6 +1,8 @@
 ﻿import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff, Loader2, User, Lock } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
 const loginSchema = z.object({
   username: z.string().min(1, "El nombre de usuario es obligatorio"),
@@ -27,6 +30,8 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLoginSuccess }: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false)
+  
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -87,46 +92,84 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {errors.root?.message ? (
-          <p className="text-sm text-destructive">{errors.root.message}</p>
+          <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+            <div className="flex items-center gap-2">
+              <Badge variant="destructive" className="text-xs">
+                Error
+              </Badge>
+              <p className="text-sm text-destructive">{errors.root.message}</p>
+            </div>
+          </div>
         ) : null}
+        
         <FormField
           control={control}
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel className="text-sm font-medium">Username</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  placeholder="nombre de usuario"
-                  autoComplete="username"
-                  {...field}
-                />
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="nombre de usuario"
+                    autoComplete="username"
+                    className="pl-10 h-11"
+                    {...field}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        
         <FormField
           control={control}
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-sm font-medium">Password</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="********"
-                  autoComplete="current-password"
-                  {...field}
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="********"
+                    autoComplete="current-password"
+                    className="pl-10 pr-10 h-11"
+                    {...field}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Iniciando..." : "Iniciar sesion"}
+        
+        <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Iniciando...
+            </>
+          ) : (
+            "Iniciar sesión"
+          )}
         </Button>
       </form>
     </Form>

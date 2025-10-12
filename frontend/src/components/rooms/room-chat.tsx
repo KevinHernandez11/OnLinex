@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Send, Wifi, WifiOff, MessageCircle, Users, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { resolveWsBaseUrl } from "@/lib/ws-url"
 
@@ -25,6 +29,8 @@ interface RoomChatProps {
 interface ChatMessage {
   id: string
   text: string
+  timestamp?: Date
+  sender?: string
 }
 
 export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomChatProps) {
@@ -63,6 +69,8 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
         {
           id: crypto.randomUUID(),
           text: event.data,
+          timestamp: new Date(),
+          sender: "Usuario", // This could be enhanced to show actual sender
         },
       ])
     }
@@ -109,41 +117,79 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
   return (
     <div
       className={cn(
-        "flex h-full min-h-[28rem] flex-col overflow-hidden rounded-3xl border border-border/60 bg-background/95 shadow-xl shadow-primary/10 backdrop-blur-sm",
+        "flex min-h-[28rem] flex-col rounded-3xl border border-border/40 bg-background/95 shadow-2xl shadow-primary/10 backdrop-blur-sm",
         className,
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 bg-muted/30 px-6 py-4">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight">Sala {roomCode}</h2>
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span
-              className={cn(
-                "h-2.5 w-2.5 rounded-full transition-colors",
-                isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500",
-              )}
-            />
-            <span>{isConnected ? "Conectado al chat" : "Desconectado"}</span>
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/30 px-6 py-5">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Sala {roomCode}</h2>
+            <div className="flex items-center gap-2">
+              <Badge variant={isConnected ? "default" : "destructive"} className="text-xs">
+                {isConnected ? (
+                  <>
+                    <Wifi className="mr-1 h-3 w-3" />
+                    Conectado
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="mr-1 h-3 w-3" />
+                    Desconectado
+                  </>
+                )}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                <Users className="mr-1 h-3 w-3" />
+                OnLinex Rooms
+              </Badge>
+            </div>
           </div>
         </div>
-        <span className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          OnLinex Rooms
-        </span>
       </div>
 
       <div className="flex flex-1 flex-col">
-        <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-br from-muted/20 via-background to-muted/30 px-6 py-6">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-br from-muted/10 via-background to-muted/20 px-6 py-6">
           {messages.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border/60 bg-background/80 px-4 py-6 text-center text-sm text-muted-foreground">
-              Aun no hay mensajes. Comparte el codigo de la sala y comienza la conversacion.
+            <div className="flex flex-col items-center justify-center space-y-4 py-12">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+                <MessageCircle className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="font-medium text-foreground">¡Comienza la conversación!</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Aún no hay mensajes. Comparte el código de la sala y comienza la conversación.
+                </p>
+              </div>
             </div>
           ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className="w-fit max-w-[80%] rounded-2xl border border-border/50 bg-background/95 px-4 py-2 text-sm shadow-sm shadow-primary/5"
-              >
-                {message.text}
+            messages.map((message, index) => (
+              <div key={message.id} className="group flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {message.sender?.charAt(0) || "U"}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      {message.sender || "Usuario"}
+                    </span>
+                    {message.timestamp && (
+                      <span className="text-xs text-muted-foreground">
+                        {message.timestamp.toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-2xl bg-muted/50 px-4 py-2.5 text-sm text-foreground shadow-sm">
+                    {message.text}
+                  </div>
+                </div>
               </div>
             ))
           )}
@@ -151,16 +197,21 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
         </div>
 
         {connectionError ? (
-          <div className="border-t border-border/60 bg-destructive/10 px-6 py-3 text-sm text-destructive">
-            {connectionError}
+          <div className="border-t border-border/40 bg-destructive/10 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <p className="text-sm text-destructive">{connectionError}</p>
+            </div>
           </div>
         ) : null}
 
-        <div className="border-t border-border/60 bg-background/90 px-6 py-4">
+        <Separator />
+        
+        <div className="bg-background/95 px-6 py-4">
           <Form {...form}>
             <form
               onSubmit={handleSubmit(handleSendMessage)}
-              className="flex flex-col gap-3 sm:flex-row sm:items-center"
+              className="flex items-center gap-3"
             >
               <FormField
                 control={control}
@@ -168,12 +219,15 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormControl>
-                      <Input
-                        placeholder="Comparte una actualizacion"
-                        autoComplete="off"
-                        {...field}
-                        disabled={!isConnected}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder={isConnected ? "Escribe tu mensaje..." : "Conectando..."}
+                          autoComplete="off"
+                          disabled={!isConnected}
+                          className="pr-12 h-11 bg-muted/50 border-border/40 focus:bg-background transition-colors"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -181,10 +235,12 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
               />
               <Button
                 type="submit"
-                disabled={!isConnected || isSubmitting}
-                className="w-full sm:w-auto"
+                disabled={!isConnected || isSubmitting || !form.watch("content")?.trim()}
+                size="icon"
+                className="h-11 w-11 shrink-0"
               >
-                Enviar
+                <Send className="h-4 w-4" />
+                <span className="sr-only">Enviar mensaje</span>
               </Button>
             </form>
           </Form>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Bot, Send, Wifi, WifiOff, Loader2, Sparkles, MessageCircle, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +21,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { resolveWsBaseUrl } from "@/lib/ws-url"
 
 const conversationSchema = z.object({
@@ -46,6 +50,7 @@ type ChatMessage = {
   id: string
   role: "user" | "assistant"
   text: string
+  timestamp?: Date
 }
 
 export function AiChat({
@@ -116,6 +121,7 @@ export function AiChat({
           id: crypto.randomUUID(),
           role: "assistant",
           text: event.data,
+          timestamp: new Date(),
         },
       ])
     }
@@ -211,6 +217,7 @@ export function AiChat({
       id: crypto.randomUUID(),
       role: "user",
       text: values.content,
+      timestamp: new Date(),
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -231,13 +238,26 @@ export function AiChat({
   } = messageForm
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Hablar con la IA</CardTitle>
-          <CardDescription>
-            Crea o reutiliza una conversacion con tu agente preferido.
-          </CardDescription>
+    <div className="space-y-6">
+      <Card className="border-2 border-border/40 shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 text-purple-600 dark:text-purple-400">
+              <Bot className="h-6 w-6" />
+            </div>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Hablar con la IA
+                <Badge variant="outline" className="text-xs">
+                  <Sparkles className="mr-1 h-3 w-3" />
+                  Beta
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Crea o reutiliza una conversación con tu agente preferido.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...conversationForm}>
@@ -246,84 +266,188 @@ export function AiChat({
               className="space-y-4"
             >
               {conversationForm.formState.errors.root?.message ? (
-                <p className="text-sm text-destructive">
-                  {conversationForm.formState.errors.root.message}
-                </p>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <p className="text-sm text-destructive">
+                      {conversationForm.formState.errors.root.message}
+                    </p>
+                  </div>
+                </div>
               ) : null}
+              
               <FormField
                 control={conversationControl}
                 name="agentName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del agente</FormLabel>
+                    <FormLabel className="text-sm font-medium">Nombre del agente</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Ej. main"
-                        autoComplete="off"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Bot className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Ej. main"
+                          autoComplete="off"
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-11"
                 disabled={isCreatingConversation}
               >
-                {isCreatingConversation ? "Conectando..." : "Iniciar conversacion"}
+                {isCreatingConversation ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Iniciar conversación
+                  </>
+                )}
               </Button>
             </form>
           </Form>
+          
           {conversationId ? (
-            <div className="mt-4 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-              Conversacion lista {activeAgentName ? `con ${activeAgentName}` : ""}. ID:
-              <span className="ml-1 font-semibold">{conversationId}</span>
+            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20 p-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                  ✓ Conectado
+                </Badge>
+                <span className="text-sm text-green-700 dark:text-green-300">
+                  Conversación lista {activeAgentName ? `con ${activeAgentName}` : ""}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                ID: <span className="font-mono">{conversationId}</span>
+              </p>
             </div>
           ) : null}
         </CardContent>
       </Card>
 
       {conversationId ? (
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Chat con la IA</CardTitle>
-            <CardDescription>
-              Estado: {isConnected ? "Conectado" : isConnecting ? "Conectando..." : "Desconectado"}
-            </CardDescription>
+        <Card className="border-2 border-border/40 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 text-purple-600 dark:text-purple-400">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle>Chat con la IA</CardTitle>
+                  <CardDescription>
+                    Conversación activa con {activeAgentName || "agente"}
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant={isConnected ? "default" : isConnecting ? "secondary" : "destructive"}>
+                {isConnected ? (
+                  <>
+                    <Wifi className="mr-1 h-3 w-3" />
+                    Conectado
+                  </>
+                ) : isConnecting ? (
+                  <>
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="mr-1 h-3 w-3" />
+                    Desconectado
+                  </>
+                )}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex h-80 flex-col justify-between rounded-md border">
-              <div className="flex-1 space-y-2 overflow-y-auto p-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={message.role === "user" ? "text-right" : "text-left"}
-                  >
-                    <div
-                      className={`inline-block max-w-[85%] rounded-md px-3 py-2 text-sm ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      {message.text}
+            <div className="flex max-h-96 min-h-[24rem] flex-col justify-between rounded-xl border border-border/40 bg-muted/20">
+              <div className="flex-1 space-y-4 overflow-y-auto p-6">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center space-y-4 py-12">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/10">
+                      <Bot className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="font-medium text-foreground">¡Hola! Soy tu asistente IA</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Pregúntame lo que necesites. Estoy aquí para ayudarte con ideas, respuestas y tareas.
+                      </p>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      {message.role === "assistant" && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/10 to-blue-500/10 text-purple-600 dark:text-purple-400">
+                          <Bot className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className={`flex flex-col space-y-1 max-w-[80%] ${message.role === "user" ? "items-end" : "items-start"}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {message.role === "user" ? "Tú" : activeAgentName || "IA"}
+                          </span>
+                          {message.timestamp && (
+                            <span className="text-xs text-muted-foreground">
+                              {message.timestamp.toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background border border-border/40"
+                          }`}
+                        >
+                          {message.text}
+                        </div>
+                      </div>
+                      {message.role === "user" && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
+                          U
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
                 <div ref={messagesEndRef} />
               </div>
+              
               {connectionError ? (
-                <div className="border-t px-4 py-2 text-sm text-destructive">
-                  {connectionError}
+                <div className="border-t border-border/40 bg-destructive/10 px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <p className="text-sm text-destructive">{connectionError}</p>
+                  </div>
                 </div>
               ) : null}
-              <div className="border-t p-4">
+              
+              <Separator />
+              
+              <div className="bg-background/95 px-6 py-4">
                 <Form {...messageForm}>
                   <form
                     onSubmit={handleMessageSubmit(handleSendMessage)}
-                    className="flex gap-2"
+                    className="flex items-center gap-3"
                   >
                     <FormField
                       control={messageControl}
@@ -332,9 +456,10 @@ export function AiChat({
                         <FormItem className="flex-1">
                           <FormControl>
                             <Input
-                              placeholder="Escribe tu mensaje"
+                              placeholder={isConnected ? "Escribe tu mensaje..." : "Conectando..."}
                               autoComplete="off"
                               disabled={!isConnected || isConnecting}
+                              className="h-11 bg-muted/50 border-border/40 focus:bg-background transition-colors"
                               {...field}
                             />
                           </FormControl>
@@ -344,9 +469,12 @@ export function AiChat({
                     />
                     <Button
                       type="submit"
-                      disabled={!isConnected || isConnecting || isSendingMessage}
+                      disabled={!isConnected || isConnecting || isSendingMessage || !messageForm.watch("content")?.trim()}
+                      size="icon"
+                      className="h-11 w-11 shrink-0"
                     >
-                      Enviar
+                      <Send className="h-4 w-4" />
+                      <span className="sr-only">Enviar mensaje</span>
                     </Button>
                   </form>
                 </Form>
