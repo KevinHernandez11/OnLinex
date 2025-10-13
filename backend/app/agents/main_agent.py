@@ -15,9 +15,7 @@ load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-
 llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4.1-2025-04-14", temperature=0.7)
-
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", DEFAULT_PROMPT),
@@ -25,10 +23,8 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 
-agent = create_react_agent(
-model=llm,
-tools=[], 
-prompt=prompt)
+# Create a simple agent without ReAct for better prompt control
+agent = prompt | llm
 
 
 def summarize_history(messages):
@@ -56,32 +52,63 @@ def summarize_history(messages):
     return llm.invoke(summary_prompt).content
 
 
-def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> str:
-    """Agente con memoria corta (Redis) y persistencia de resumen en Supabase."""
-
+def clear_redis_session(user_id: str, session_id: str):
+    """Clear Redis history for a specific session to ensure clean start."""
+    redis_session_key = f"user_{user_id}_session_{session_id}"
     redis_history = RedisChatMessageHistory(
-        session_id=f"user_{user_id}_session_{session_id}",
+        session_id=redis_session_key,
         url=REDIS_URL,
         ttl=3600 * 12
     )
+    redis_history.clear()
+    print(f"Cleared Redis history for session: {redis_session_key}")
 
-    agent_with_history = RunnableWithMessageHistory(
-        agent,
-        lambda _: redis_history,
-        input_messages_key="input",
+
+def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> str:
+    """Agente con memoria corta (Redis) y persistencia de resumen en Supabase."""
+
+    # Create a unique session key to ensure proper isolation
+    redis_session_key = f"user_{user_id}_session_{session_id}"
+    
+    redis_history = RedisChatMessageHistory(
+        session_id=redis_session_key,
+        url=REDIS_URL,
+        ttl=3600 * 12
     )
+    
+    # Check if there are any messages that don't belong to this conversation
+    # If we detect contamination, clear the history
+    if len(redis_history.messages) > 0:
+        # for i, msg in enumerate(redis_history.messages):
+        #     print(f"Message {i}: {msg.type} - {msg.content[:100]}...")
+        
+        # If the first message is not from the current user input, clear history
+        if len(redis_history.messages) > 0 and redis_history.messages[0].type == "ai":
+            print("\nDetected contamination in Redis history. Clearing...")
+            redis_history.clear()
 
-    response = agent_with_history.invoke(
-        {"input": user_input},
-        config={"configurable": {"session_id": session_id}},
-    )
+    # Add user message to history
+    redis_history.add_user_message(user_input)
+    
+    # Get all messages from history
+    messages = redis_history.messages
+    
+    # Invoke agent with messages
+    response = agent.invoke({"messages": messages})
+    
+    # Extract content from response
+    if hasattr(response, 'content'):
+        response_content = response.content
+    else:
+        response_content = str(response)
+    
+    # Add AI response to history
+    redis_history.add_ai_message(response_content)
 
-    if len(redis_history.messages) >= 10: #
+    if len(redis_history.messages) >= 10:
         summary = summarize_history(redis_history.messages[:10]) 
 
-        for _ in range(10):
-            redis_history.messages.pop(0)
-
+        # Save summary to database
         conversation = AgentMemorySummary(
             conversation_id=session_id,
             summary=summary
@@ -91,7 +118,15 @@ def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> s
         db.commit()
         db.refresh(conversation)
 
+        # Clear old messages but keep recent ones for context
+        messages_to_keep = redis_history.messages[10:]
         redis_history.clear()
-        redis_history.add_ai_message(f"Resumen guardado: {summary[:100]}...")
+        
+        # Add back the recent messages to maintain some context
+        for msg in messages_to_keep:
+            if msg.type == "human":
+                redis_history.add_user_message(msg.content)
+            elif msg.type == "ai":
+                redis_history.add_ai_message(msg.content)
 
-    return response
+    return response_content

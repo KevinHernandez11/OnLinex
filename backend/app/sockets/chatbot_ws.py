@@ -49,7 +49,7 @@ async def websocket_chat(
                 db=db
             )
 
-            await manager.send_messages(response["messages"][-1].content, conversation_id)
+            await manager.send_messages(response, conversation_id)
     except Exception as e:
         manager.disconnect(conversation_id)
         print(f"WebSocket cerrado ({conversation_id}): {e}")
