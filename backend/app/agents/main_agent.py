@@ -8,24 +8,34 @@ from app.db.database import get_db
 from app.models.conversations import AgentMemorySummary
 from app.prompts.default import DEFAULT_PROMPT
 from dotenv import load_dotenv
+from prompts.profiles import PROFILES
 import os
 
 load_dotenv()
 
 REDIS_URL = os.getenv("REDIS_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+LLM_POOL = {}
 
-llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4.1-2025-04-14", temperature=0.7)
+def get_llm(model, temperature):
+    key = f"{model}:{temperature}"
+    if key not in LLM_POOL:
+        LLM_POOL[key] = ChatOpenAI(
+            openai_api_key=OPENAI_API_KEY,
+            model=model,
+            temperature=temperature,
+        )
+    return LLM_POOL[key]
+
+
+llm = get_llm("gpt-4.1-2025-04-14", 0.7)
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", DEFAULT_PROMPT),
     MessagesPlaceholder("messages"),
 ])
 
-
-# Create a simple agent without ReAct for better prompt control
 agent = prompt | llm
-
 
 def summarize_history(messages):
     text = "\n".join([f"{m.type.upper()}: {m.content}" for m in messages])
@@ -48,8 +58,26 @@ def summarize_history(messages):
     Conversación:
     {text}
     """
-
     return llm.invoke(summary_prompt).content
+
+
+def build_agent(profile_id: str, profiles: dict, openai_api_key: str):
+    """Crea un agente dinámico basado en un perfil de configuración."""
+    profile = profiles.get(profile_id, profiles["default"])
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", profile["prompt"]),
+        MessagesPlaceholder("messages")
+    ])
+    
+    llm = ChatOpenAI(
+        openai_api_key=openai_api_key,
+        model=profile["model"],
+        temperature=profile["temperature"],
+    )
+    
+    return prompt | llm
+
 
 
 def clear_redis_session(user_id: str, session_id: str):
@@ -64,11 +92,12 @@ def clear_redis_session(user_id: str, session_id: str):
     print(f"Cleared Redis history for session: {redis_session_key}")
 
 
-def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> str:
+def main_agent(user_input: str,profile_id: str, session_id: str, user_id: str, db: Session) -> str:
     """Agente con memoria corta (Redis) y persistencia de resumen en Supabase."""
 
-    # Create a unique session key to ensure proper isolation
-    redis_session_key = f"user_{user_id}_session_{session_id}"
+    agent = build_agent(profile_id, PROFILES, OPENAI_API_KEY)
+
+    redis_session_key = f"user_{user_id}_session_{session_id}_prof_{profile_id}"
     
     redis_history = RedisChatMessageHistory(
         session_id=redis_session_key,
