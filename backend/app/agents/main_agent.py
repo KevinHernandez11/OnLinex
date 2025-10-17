@@ -1,14 +1,12 @@
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langgraph.prebuilt import create_react_agent
 from langchain_community.chat_message_histories import RedisChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.models.conversations import AgentMemorySummary
-from app.prompts.default import DEFAULT_PROMPT
+from app.models.conversations import AgentMemorySummary, Conversation
 from dotenv import load_dotenv
-from prompts.profiles import PROFILES
+from app.prompts.profiles import PROFILES
+from app.services.dependencies import DependencyResolver
+import uuid
 import os
 
 load_dotenv()
@@ -16,6 +14,8 @@ load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LLM_POOL = {}
+AGENT_POOL = {}
+
 
 def get_llm(model, temperature):
     key = f"{model}:{temperature}"
@@ -28,61 +28,42 @@ def get_llm(model, temperature):
     return LLM_POOL[key]
 
 
-llm = get_llm("gpt-4.1-2025-04-14", 0.7)
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", DEFAULT_PROMPT),
-    MessagesPlaceholder("messages"),
-])
-
-agent = prompt | llm
-
-def summarize_history(messages):
+def summarize_history(messages, llm):
     text = "\n".join([f"{m.type.upper()}: {m.content}" for m in messages])
     
     summary_prompt = f"""
-    Resume de forma breve y clara la siguiente conversación.
-    Enfócate en los temas tratados y las intenciones del usuario.
-    Y porfa no te extiendas en el resumen simplemente los puntos más importantes.
-    Y la idea central de todos los mensajes y si son variados temas trata de resumirlos todos de manera corta y clara.
+    Resume de forma breve y clara la siguiente conversacion.
+    Enfocate en los temas tratados y las intenciones del usuario.
+    No te extiendas: mantente en los puntos mas importantes.
+    Si hay varios temas, resume cada uno de manera corta y clara.
 
-    Por ejemplo
-    # El usuario quiere aprender sobre inteligencia artificial y pide recomendaciones de libros y cursos.
-        O
-    # El usuario está interesado en viajar a Japón y busca consejos sobre lugares para visitar y alojamientos.
-        O
-    # El usuario está planeando una fiesta de cumpleaños y necesita ideas para la decoración, comida y actividades.
-
-
-
-    Conversación:
+    Conversacion:
     {text}
     """
+
     return llm.invoke(summary_prompt).content
 
 
-def build_agent(profile_id: str, profiles: dict, openai_api_key: str):
-    """Crea un agente dinámico basado en un perfil de configuración."""
-    profile = profiles.get(profile_id, profiles["default"])
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", profile["prompt"]),
-        MessagesPlaceholder("messages")
-    ])
-    
-    llm = ChatOpenAI(
-        openai_api_key=openai_api_key,
-        model=profile["model"],
-        temperature=profile["temperature"],
-    )
-    
-    return prompt | llm
+def build_agent(profile_id: str):
+    profile = PROFILES.get(profile_id, PROFILES["default"])
+    cache_key = f"{profile_id}:{profile['model']}:{profile['temperature']}"
+
+    if cache_key not in AGENT_POOL:
+        llm = get_llm(profile["model"], profile["temperature"])
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", profile["prompt"]),
+            MessagesPlaceholder("messages"),
+        ])
+        AGENT_POOL[cache_key] = (prompt | llm, llm)
+
+    return AGENT_POOL[cache_key]
 
 
 
-def clear_redis_session(user_id: str, session_id: str):
+
+def clear_redis_session(user_id: str, session_id: str, profile_id: str):
     """Clear Redis history for a specific session to ensure clean start."""
-    redis_session_key = f"user_{user_id}_session_{session_id}"
+    redis_session_key = f"user_{user_id}_session_{session_id}_prof_{profile_id}"
     redis_history = RedisChatMessageHistory(
         session_id=redis_session_key,
         url=REDIS_URL,
@@ -92,10 +73,12 @@ def clear_redis_session(user_id: str, session_id: str):
     print(f"Cleared Redis history for session: {redis_session_key}")
 
 
-def main_agent(user_input: str,profile_id: str, session_id: str, user_id: str, db: Session) -> str:
+def main_agent(user_input: str, session_id: str, user_id: str, db: Session) -> str:
     """Agente con memoria corta (Redis) y persistencia de resumen en Supabase."""
 
-    agent = build_agent(profile_id, PROFILES, OPENAI_API_KEY)
+    profile_id = DependencyResolver._resolve_profile_id(db, session_id)
+
+    agent, llm = build_agent(profile_id)
 
     redis_session_key = f"user_{user_id}_session_{session_id}_prof_{profile_id}"
     
@@ -135,7 +118,7 @@ def main_agent(user_input: str,profile_id: str, session_id: str, user_id: str, d
     redis_history.add_ai_message(response_content)
 
     if len(redis_history.messages) >= 10:
-        summary = summarize_history(redis_history.messages[:10]) 
+        summary = summarize_history(redis_history.messages[:10], llm) 
 
         # Save summary to database
         conversation = AgentMemorySummary(

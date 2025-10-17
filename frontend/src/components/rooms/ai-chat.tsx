@@ -2,7 +2,20 @@ import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Bot, Send, Wifi, WifiOff, Loader2, Sparkles, MessageCircle, AlertCircle } from "lucide-react"
+import {
+  Bot,
+  Send,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Sparkles,
+  MessageCircle,
+  AlertCircle,
+  Flame,
+  Crosshair,
+  Swords,
+  type LucideIcon,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -23,11 +36,47 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import { resolveWsBaseUrl } from "@/lib/ws-url"
 
+const AVAILABLE_PROFILES = ["default", "dante", "lady", "vergil"] as const
+type ProfileId = (typeof AVAILABLE_PROFILES)[number]
+
+const PROFILE_DETAILS: Record<ProfileId, { label: string; description: string; icon: LucideIcon }> =
+  {
+    default: {
+      label: "Default",
+      description: "Equilibrado para todo tipo de solicitudes.",
+      icon: Sparkles,
+    },
+    dante: {
+      label: "Dante",
+      description: "Creativo con tono entusiasta.",
+      icon: Flame,
+    },
+    lady: {
+      label: "Lady",
+      description: "Directo y practico en las respuestas.",
+      icon: Crosshair,
+    },
+    vergil: {
+      label: "Vergil",
+      description: "Analitico y estructurado.",
+      icon: Swords,
+    },
+  }
+
+const DEFAULT_PROFILE_ID: ProfileId = AVAILABLE_PROFILES[0]
+
+function isProfileId(value: string | null | undefined): value is ProfileId {
+  return Boolean(value && AVAILABLE_PROFILES.includes(value as ProfileId))
+}
+
 const conversationSchema = z.object({
-  agentName: z.string().min(1, "El nombre del agente es obligatorio"),
+  agentName: z.enum(AVAILABLE_PROFILES, {
+    required_error: "Selecciona un perfil de IA.",
+    invalid_type_error: "Selecciona un perfil valido.",
+  }),
 })
 
 const messageSchema = z.object({
@@ -42,7 +91,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? ""
 interface AiChatProps {
   accessToken: string
   tokenType: string
-  defaultAgentName?: string
+  defaultAgentName?: ProfileId
   onUnauthorized?: () => void
 }
 
@@ -56,30 +105,38 @@ type ChatMessage = {
 export function AiChat({
   accessToken,
   tokenType,
-  defaultAgentName = "main",
+  defaultAgentName = DEFAULT_PROFILE_ID,
   onUnauthorized,
 }: AiChatProps) {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
-  const [activeAgentName, setActiveAgentName] = useState<string | null>(
-    defaultAgentName ? defaultAgentName : null
-  )
+  const [activeAgentName, setActiveAgentName] = useState<ProfileId | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
+  const initialSelectedProfile = isProfileId(defaultAgentName)
+    ? defaultAgentName
+    : DEFAULT_PROFILE_ID
+
   const conversationForm = useForm<ConversationFormValues>({
     resolver: zodResolver(conversationSchema),
-    defaultValues: { agentName: defaultAgentName },
+    defaultValues: { agentName: initialSelectedProfile },
   })
 
   const messageForm = useForm<MessageFormValues>({
     resolver: zodResolver(messageSchema),
     defaultValues: { content: "" },
   })
+
+  const watchedAgentName = conversationForm.watch("agentName")
+  const pendingAgentProfile = isProfileId(watchedAgentName)
+    ? PROFILE_DETAILS[watchedAgentName]
+    : null
+  const activeAgentProfile = activeAgentName ? PROFILE_DETAILS[activeAgentName] : null
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -281,16 +338,42 @@ export function AiChat({
                 name="agentName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">Nombre del agente</FormLabel>
+                    <FormLabel className="text-sm font-medium">Selecciona un perfil</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Bot className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          placeholder="Ej. main"
-                          autoComplete="off"
-                          className="pl-10 h-11"
-                          {...field}
-                        />
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {AVAILABLE_PROFILES.map((profileId) => {
+                          const profile = PROFILE_DETAILS[profileId]
+                          const Icon = profile.icon
+                          const isSelected = field.value === profileId
+
+                          return (
+                            <button
+                              type="button"
+                              key={profileId}
+                              onClick={() => field.onChange(profileId)}
+                              onBlur={field.onBlur}
+                              aria-pressed={isSelected}
+                              className={cn(
+                                "flex h-full w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                                isSelected
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border/50 hover:border-primary/40 hover:bg-muted/50"
+                              )}
+                            >
+                              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Icon className="h-5 w-5" />
+                              </span>
+                              <span className="flex flex-col gap-1">
+                                <span className="text-sm font-semibold capitalize">
+                                  {profile.label}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {profile.description}
+                                </span>
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -301,7 +384,7 @@ export function AiChat({
               <Button
                 type="submit"
                 className="w-full h-11"
-                disabled={isCreatingConversation}
+                disabled={isCreatingConversation || !watchedAgentName}
               >
                 {isCreatingConversation ? (
                   <>
@@ -311,7 +394,7 @@ export function AiChat({
                 ) : (
                   <>
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Iniciar conversación
+                    {pendingAgentProfile ? `Hablar con ${pendingAgentProfile.label}` : "Iniciar conversacion"}
                   </>
                 )}
               </Button>
@@ -322,10 +405,10 @@ export function AiChat({
             <div className="mt-4 rounded-lg border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20 p-4">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                  ✓ Conectado
+                  Conectado
                 </Badge>
                 <span className="text-sm text-green-700 dark:text-green-300">
-                  Conversación lista {activeAgentName ? `con ${activeAgentName}` : ""}
+                  Conversacion lista {activeAgentProfile ? `con ${activeAgentProfile.label}` : ""}
                 </span>
               </div>
               <p className="mt-1 text-xs text-green-600 dark:text-green-400">
@@ -347,7 +430,7 @@ export function AiChat({
                 <div>
                   <CardTitle>Chat con la IA</CardTitle>
                   <CardDescription>
-                    Conversación activa con {activeAgentName || "agente"}
+                    Conversacion activa con {activeAgentProfile?.label ?? "agente"}
                   </CardDescription>
                 </div>
               </div>
@@ -400,7 +483,7 @@ export function AiChat({
                       <div className={`flex flex-col space-y-1 max-w-[80%] ${message.role === "user" ? "items-end" : "items-start"}`}>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-muted-foreground">
-                            {message.role === "user" ? "Tú" : activeAgentName || "IA"}
+                            {message.role === "user" ? "Tu" : (activeAgentProfile?.label ?? "IA")}
                           </span>
                           {message.timestamp && (
                             <span className="text-xs text-muted-foreground">
@@ -453,15 +536,21 @@ export function AiChat({
                       control={messageControl}
                       name="content"
                       render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input
-                              placeholder={isConnected ? "Escribe tu mensaje..." : "Conectando..."}
-                              autoComplete="off"
-                              disabled={!isConnected || isConnecting}
-                              className="h-11 bg-muted/50 border-border/40 focus:bg-background transition-colors"
-                              {...field}
-                            />
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          placeholder={
+                            isConnected
+                              ? activeAgentProfile
+                                ? `Mensaje para ${activeAgentProfile.label}...`
+                                : "Escribe tu mensaje..."
+                              : "Conectando..."
+                          }
+                          autoComplete="off"
+                          disabled={!isConnected || isConnecting}
+                          className="h-11 bg-muted/50 border-border/40 focus:bg-background transition-colors"
+                          {...field}
+                        />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
