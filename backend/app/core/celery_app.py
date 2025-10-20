@@ -1,3 +1,4 @@
+# from app.core.config import settings
 # from celery import Celery
 # from celery.schedules import crontab
 
