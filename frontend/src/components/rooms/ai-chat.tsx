@@ -14,6 +14,7 @@ import {
   Flame,
   Crosshair,
   Swords,
+  Snowflake,
   type LucideIcon,
 } from "lucide-react"
 
@@ -39,7 +40,10 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { resolveWsBaseUrl } from "@/lib/ws-url"
 
-const AVAILABLE_PROFILES = ["default", "dante", "lady", "vergil"] as const
+const TYPING_INTERVAL_MS = 18
+const TYPING_STEP = 3
+
+const AVAILABLE_PROFILES = ["default", "dante", "lady", "vergil", "emma_frost"] as const
 type ProfileId = (typeof AVAILABLE_PROFILES)[number]
 
 const PROFILE_DETAILS: Record<ProfileId, { label: string; description: string; icon: LucideIcon }> =
@@ -63,6 +67,11 @@ const PROFILE_DETAILS: Record<ProfileId, { label: string; description: string; i
       label: "Vergil",
       description: "Analitico y estructurado.",
       icon: Swords,
+    },
+    emma_frost: {
+      label: "Emma Frost",
+      description: "Elegante, estrategica y con tono sereno.",
+      icon: Snowflake,
     },
   }
 
@@ -99,6 +108,7 @@ type ChatMessage = {
   id: string
   role: "user" | "assistant"
   text: string
+  displayText: string
   timestamp?: Date
 }
 
@@ -143,6 +153,48 @@ export function AiChat({
   }, [messages])
 
   useEffect(() => {
+    const typingIndex = messages.findIndex(
+      (msg) => msg.role === "assistant" && msg.displayText.length < msg.text.length
+    )
+
+    if (typingIndex === -1) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setMessages((prev) => {
+        const index = prev.findIndex(
+          (msg) => msg.role === "assistant" && msg.displayText.length < msg.text.length
+        )
+
+        if (index === -1) {
+          return prev
+        }
+
+        const target = prev[index]
+        const nextLength = Math.min(
+          target.text.length,
+          target.displayText.length + TYPING_STEP
+        )
+
+        if (nextLength === target.displayText.length) {
+          return prev
+        }
+
+        const updated = [...prev]
+        updated[index] = {
+          ...target,
+          displayText: target.text.slice(0, nextLength),
+        }
+
+        return updated
+      })
+    }, TYPING_INTERVAL_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [messages])
+
+  useEffect(() => {
     if (!conversationId) {
       return
     }
@@ -178,6 +230,7 @@ export function AiChat({
           id: crypto.randomUUID(),
           role: "assistant",
           text: event.data,
+          displayText: "",
           timestamp: new Date(),
         },
       ])
@@ -274,6 +327,7 @@ export function AiChat({
       id: crypto.randomUUID(),
       role: "user",
       text: values.content,
+      displayText: values.content,
       timestamp: new Date(),
     }
 
@@ -501,7 +555,7 @@ export function AiChat({
                               : "bg-background border border-border/40"
                           }`}
                         >
-                          {message.text}
+                          {message.displayText}
                         </div>
                       </div>
                       {message.role === "user" && (
