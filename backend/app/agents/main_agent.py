@@ -35,7 +35,7 @@ def summarize_history(messages, llm):
     Resume de forma breve y clara la siguiente conversacion.
     Enfocate en los temas tratados y las intenciones del usuario.
     No te extiendas: mantente en los puntos mas importantes.
-    Si hay varios temas, resume cada uno de manera corta y clara.
+    Si hay varios temas, resume cada uno de manera corta y clara y menos de 500 carateres en total.
 
     Conversacion:
     {text}
