@@ -15,6 +15,7 @@ import {
   Crosshair,
   Swords,
   Snowflake,
+  Cat,
   type LucideIcon,
 } from "lucide-react"
 
@@ -43,7 +44,7 @@ import { resolveWsBaseUrl } from "@/lib/ws-url"
 const TYPING_INTERVAL_MS = 18
 const TYPING_STEP = 3
 
-const AVAILABLE_PROFILES = ["default", "dante", "lady", "vergil", "emma_frost"] as const
+const AVAILABLE_PROFILES = ["default", "dante", "lady", "vergil", "emma_frost", "hello_kity"] as const
 type ProfileId = (typeof AVAILABLE_PROFILES)[number]
 
 const PROFILE_DETAILS: Record<ProfileId, { label: string; description: string; icon: LucideIcon }> =
@@ -72,6 +73,11 @@ const PROFILE_DETAILS: Record<ProfileId, { label: string; description: string; i
       label: "Emma Frost",
       description: "Elegante, estrategica y con tono sereno.",
       icon: Snowflake,
+    },
+    hello_kity: {
+      label: "Hello Kity",
+      description: "Dulce, optimista y enfocada en la creatividad tierna.",
+      icon: Cat,
     },
   }
 
