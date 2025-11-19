@@ -3,13 +3,11 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Send, Wifi, WifiOff, MessageCircle, Users, AlertCircle } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { resolveWsBaseUrl } from "@/lib/ws-url"
 
@@ -167,7 +165,7 @@ export function RoomChat({ roomCode, accessToken, tokenType, className }: RoomCh
               </div>
             </div>
           ) : (
-            messages.map((message, index) => (
+            messages.map((message) => (
               <div key={message.id} className="group flex items-start gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
                   {message.sender?.charAt(0) || "U"}
