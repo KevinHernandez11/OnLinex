@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
-import { Clock, User, Zap, MessageCircle, Users, Bot, ArrowRight, Timer, AlertCircle, Loader2 } from "lucide-react"
+import { User, Zap, MessageCircle, Users, Bot, ArrowRight, Timer, AlertCircle, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {

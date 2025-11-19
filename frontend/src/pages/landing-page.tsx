@@ -8,29 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { AmbientBouncer } from "@/components/visuals/ambient-bouncer"
 
 export function LandingPage() {
-  const featureHighlights = [
-    {
-      Icon: Sparkles,
-      title: "Listo en minutos",
-      description: "Configura tu sala, invita participantes y colabora sin friccion.",
-      color: "text-blue-500",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-    },
-    {
-      Icon: Users,
-      title: "Experiencia compartida",
-      description: "Gestiona miembros, conversaciones y espacios en tiempo real.",
-      color: "text-green-500",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-    },
-    {
-      Icon: Bot,
-      title: "IA integrada",
-      description: "Resuelve dudas y automatiza tareas con nuestro agente inteligente.",
-      color: "text-purple-500",
-      bgColor: "bg-purple-50 dark:bg-purple-950/20",
-    },
-  ]
+  // (featureHighlights removed because it was unused)
 
   const benefits = [
     {
