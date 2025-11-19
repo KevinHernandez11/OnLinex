@@ -88,10 +88,7 @@ function isProfileId(value: string | null | undefined): value is ProfileId {
 }
 
 const conversationSchema = z.object({
-  agentName: z.enum(AVAILABLE_PROFILES, {
-    required_error: "Selecciona un perfil de IA.",
-    invalid_type_error: "Selecciona un perfil valido.",
-  }),
+  agentName: z.enum(AVAILABLE_PROFILES, { message: "Selecciona un perfil valido." }),
 })
 
 const messageSchema = z.object({
