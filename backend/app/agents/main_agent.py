@@ -58,9 +58,6 @@ def build_agent(profile_id: str):
 
     return AGENT_POOL[cache_key]
 
-
-
-
 def clear_redis_session(user_id: str, session_id: str, profile_id: str):
     """Clear Redis history for a specific session to ensure clean start."""
     redis_session_key = f"user_{user_id}_session_{session_id}_prof_{profile_id}"
